@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import { AuthDto } from './dto';
+import { AuthDto, LoginDto } from './dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
@@ -7,8 +7,30 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 @Injectable({})
 export class AuthService {
   constructor(private prisma: PrismaService) {}
-  signin() {
-    return { auth: true, message: 'User logged in successfully' };
+
+  async signin(dto: LoginDto) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        email: dto.email,
+      },
+    });
+
+    if (!user) {
+      throw new ForbiddenException('Incorrect Credentials!');
+    }
+
+    const isCorrectPassword = await bcrypt.compare(
+      dto.password,
+      user.hashPassword,
+    );
+
+    if (!isCorrectPassword) {
+      throw new ForbiddenException('Incorrect Credentials!');
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { hashPassword, ...result } = user;
+    return result;
   }
 
   async signup(dto: AuthDto) {

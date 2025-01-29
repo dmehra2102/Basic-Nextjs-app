@@ -20,3 +20,15 @@ export class AuthDto {
   @IsString()
   lastName: string;
 }
+
+export class LoginDto {
+  @IsNotEmpty()
+  @IsEmail()
+  email: string;
+
+  @IsNotEmpty()
+  @MinLength(6, {
+    message: "Password can't be less than 6 characters",
+  })
+  password: string;
+}
